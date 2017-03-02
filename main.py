@@ -182,7 +182,7 @@ class upload (object):
 
         flog.write('Запись завершена в ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss')+ ' количество файлов ' + str(count)+'\n')
         flog.close()
-        #query.exec_('delete from tobackup.t_image;')
+        query.exec_('delete from tobackup.t_image;')
 
 # проверка на наличие конфиг файла
 def configupload ():
@@ -229,7 +229,6 @@ def main():
             msg.setInformativeText(u"СУБД не доступна по заданным параметрам, обратитесь к администратору. Если вы сами администратор, то мне вас искренне не жаль")
             msg.exec_()
             app.closeAllWindows()
-
         QtGui.QApplication.setQuitOnLastWindowClosed(False)
         tray.setIcon(QtGui.QIcon('icons\main.png'))
         menu = QtGui.QMenu()
@@ -239,9 +238,9 @@ def main():
         exit.triggered.connect(QtGui.qApp.quit)
         tray.setContextMenu(menu)
 
-        #timer = QtCore.QTimer()
-        #timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
-        #timer.timeout.connect(upload)
+        timer = QtCore.QTimer()
+        timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
+        timer.timeout.connect(upload)
         upload()
         tray.show()
         sys.exit(app.exec_())
