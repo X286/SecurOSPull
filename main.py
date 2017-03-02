@@ -239,7 +239,6 @@ def main():
         timer = QtCore.QTimer()
         timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
         timer.timeout.connect(upload)
-        upload()
         tray.show()
         sys.exit(app.exec_())
     else:
