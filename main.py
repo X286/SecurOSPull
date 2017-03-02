@@ -177,9 +177,7 @@ class upload (object):
             file.open(QtCore.QIODevice.WriteOnly)
             file.write(str(query.value(2).toString()).decode('hex'))
             file.close()
-            print unicode(file_parth)
             count += 1
-
         flog.write('Запись завершена в ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss')+ ' количество файлов ' + str(count)+'\n')
         flog.close()
         query.exec_('delete from tobackup.t_image;')
