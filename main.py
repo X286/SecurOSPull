@@ -150,7 +150,7 @@ class upload (object):
     def execute(self):
         global db
         query = QtSql.QSqlQuery()
-        str1 = 'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name from tobackup.t_log s inner join tobackup.t_image m using (tid)'
+        str1 = 'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name, tid from tobackup.t_log s inner join tobackup.t_image m using (tid)'
         query.exec_(str1)
         count = 0
         flog = ''
@@ -177,10 +177,12 @@ class upload (object):
             file.open(QtCore.QIODevice.WriteOnly)
             file.write(str(query.value(2).toString()).decode('hex'))
             file.close()
+            deletestr = 'delete from tobackup.t_image where tid = '+query.value(5).toString()+';'
+            #print deletestr
+            query.exec_(deletestr)
             count += 1
-        flog.write('Запись завершена в ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss')+ ' количество файлов ' + str(count)+'\n')
+        flog.write('Запись завершена в ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss') + ' количество файлов ' + str(count)+'\n')
         flog.close()
-        query.exec_('delete from tobackup.t_image;')
 
 # проверка на наличие конфиг файла
 def configupload ():
@@ -207,9 +209,11 @@ db = ''
 def main():
     app = QtGui.QApplication(sys.argv)
     reta = configupload()
+
     global globalConf
     if reta == True:
         global db
+        firstTS = 0 # Запуск впервые
         #send_to_FTP (app)
         db = QtSql.QSqlDatabase.addDatabase("QPSQL")
         db.setHostName(globalConf.get('database','ip'))
@@ -235,7 +239,9 @@ def main():
         exit = menu.addAction(u'Закрыть')
         exit.triggered.connect(QtGui.qApp.quit)
         tray.setContextMenu(menu)
-
+        if firstTS == 0:
+            upload()
+            firstTS = 1
         timer = QtCore.QTimer()
         timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
         timer.timeout.connect(upload)
