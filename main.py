@@ -255,7 +255,7 @@ def main():
             firstTS = 1
         timer = QtCore.QTimer()
         timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
-        #timer.timeout.connect(upload)
+        timer.timeout.connect(upload)
         tray.show()
         sys.exit(app.exec_())
     else:
