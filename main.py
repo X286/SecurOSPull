@@ -188,7 +188,7 @@ class upload (object):
         try:
             flog = open('process.log', 'a')
             flog.write('Лог за ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss') + '\n')
-            flog.write('===Все файлы а именно' + allfiles + ' перенесены.===')
+            flog.write('===Все файлы а именно ' + str(allfiles)+ ' перенесены.===')
             flog.close()
         except:
             raise IOError(u'Log file not found')
