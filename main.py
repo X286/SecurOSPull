@@ -149,40 +149,51 @@ class upload (object):
 
     def execute(self):
         global db
-        query = QtSql.QSqlQuery()
-        str1 = 'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name, tid from tobackup.t_log s inner join tobackup.t_image m using (tid)'
-        query.exec_(str1)
-        count = 0
-        flog = ''
+        query_c = QtSql.QSqlQuery()
+        str_c = 'select count (*) form from tobackup.t_log s inner join tobackup.t_image m using (tid)'
+        query_c.exec_(str_c)
+        rowsc = 0
+        allfiles = 0
+        while query_c.next():
+            rowsc=query_c.value(0).toInt()[0]
+            allfiles = query_c.value(0).toInt()[0]
+        while rowsc > 0:
+            query = QtSql.QSqlQuery()
+            str1 = 'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name, tid from tobackup.t_log s inner join tobackup.t_image m using (tid) limit 100;'
+            query.exec_(str1)
+            count = 0
+            while query.next():
+                file_parth = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'+query.value(0).toDateTime().toString('dd_MM_yy hh-mm-ss') + ' ' + query.value(1).toString().replace ('?', '_')+'__'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'.jpg')
+                file_parth = file_parth.replace('\\','/')
+                if os.path.exists(unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())) is False:
+                    firstiter = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())
+                    os.mkdir(firstiter)
+                secstep = globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'
+                if os.path.exists(unicode(secstep)) is False:
+                    os.mkdir(unicode(secstep))
+                tridstep = globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'
+                if os.path.exists(unicode(tridstep)) is False:
+                    os.mkdir(unicode(tridstep))
+
+                file = QtCore.QFile(file_parth)
+                file.open(QtCore.QIODevice.WriteOnly)
+                file.write(str(query.value(2).toString()).decode('hex'))
+                file.close()
+                count += 1
+                # Удаление
+                query_d = QtSql.QSqlQuery()
+                deletestr = 'delete from tobackup.t_image where tid = '+query.value(5).toString()+';'
+                query_d.exec_(deletestr)
+            rowsc -= count
         try:
             flog = open('process.log', 'a')
-            flog.write('Лог за ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss')+'\n')
+            flog.write('Лог за ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss') + '\n')
+            flog.write('===Все файлы а именно' + allfiles + ' перенесены.===')
+            flog.close()
         except:
-            pass
+            raise IOError(u'Log file not found')
 
-        while query.next():
-            file_parth = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'+query.value(0).toDateTime().toString('dd_MM_yy hh-mm-ss') + ' ' + query.value(1).toString().replace ('?', '_')+'__'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'.jpg')
-            file_parth = file_parth.replace('\\','/')
-            if os.path.exists(unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())) is False:
-                firstiter = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())
-                os.mkdir(firstiter)
-            secstep = globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'
-            if os.path.exists(unicode(secstep)) is False:
-                os.mkdir(unicode(secstep))
-            tridstep = globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'
-            if os.path.exists(unicode(tridstep)) is False:
-                os.mkdir(unicode(tridstep))
 
-            file = QtCore.QFile(file_parth)
-            file.open(QtCore.QIODevice.WriteOnly)
-            file.write(str(query.value(2).toString()).decode('hex'))
-            file.close()
-            deletestr = 'delete from tobackup.t_image where tid = '+query.value(5).toString()+';'
-            #print deletestr
-            query.exec_(deletestr)
-            count += 1
-        flog.write('Запись завершена в ' + QtCore.QDateTime.currentDateTime().toString('dd-MM-yy hh:mm:ss') + ' количество файлов ' + str(count)+'\n')
-        flog.close()
 
 # проверка на наличие конфиг файла
 def configupload ():
@@ -240,11 +251,11 @@ def main():
         exit.triggered.connect(QtGui.qApp.quit)
         tray.setContextMenu(menu)
         if firstTS == 0:
-            upload()
+            upload() # первый вызов, я знаю, что условие бесполезно, но всё же мало ли
             firstTS = 1
         timer = QtCore.QTimer()
         timer.start(int (globalConf.get('options', 'script_startsec'))*1000)
-        timer.timeout.connect(upload)
+        #timer.timeout.connect(upload)
         tray.show()
         sys.exit(app.exec_())
     else:
