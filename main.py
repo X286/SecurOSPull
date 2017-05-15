@@ -32,13 +32,7 @@ class send_to_FTP (object):
         self.ftpconf.set_pasv(True)
         self.ftpconf.connect(globalConf.get('FTP', 'FTP'), int(globalConf.get('FTP', 'FTPPort')))
         self.ftpconf.login(globalConf.get('FTP', 'FTPUser'), globalConf.get('FTP', 'FTPPassword'))
-        #make directory
-        #self.ftpconf.mkd('IVAN')
-        #remove dir
-        #self.ftpconf.rmd('IVAN')
-        #print self.ftpconf.dir()
         filewherepics = globalConf.get ('options', 'folderpath')
-        #self.uploadThis(os.path.abspath(filewherepics))
         self.uploadF(os.path.abspath(filewherepics))
     def uploadF (self, path):
         files = os.listdir(path)
@@ -47,9 +41,6 @@ class send_to_FTP (object):
                 self.ftpconf.mkd(f)
             for i in os.listdir (path + r'\{}'.format(f)):
                 print i, path + r'\{}'.format(f)+r'\{}'.format(i)
-
-                #print os.listdir(path + r'\{}'.format(f)+r'\{}'.format(i))
-        #print current
     def uploadThis(self, path):
         files = os.listdir(path)
         os.chdir(path)
@@ -149,6 +140,7 @@ class upload (object):
 
     def execute(self):
         global db
+
         query_c = QtSql.QSqlQuery()
         str_c = 'select count (*) form from tobackup.t_log s inner join tobackup.t_image m using (tid)'
         query_c.exec_(str_c)
@@ -159,11 +151,11 @@ class upload (object):
             allfiles = query_c.value(0).toInt()[0]
         while rowsc > 0:
             query = QtSql.QSqlQuery()
-            str1 = 'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name, tid from tobackup.t_log s inner join tobackup.t_image m using (tid) limit 100;'
+            str1 = u'select time_best,plate_recognized,encode(image,\'hex\'), camera_host, lpr_name, tid from tobackup.t_log s inner join tobackup.t_image m using (tid) limit 100;'
             query.exec_(str1)
             count = 0
             while query.next():
-                file_parth = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'+query.value(0).toDateTime().toString('dd_MM_yy hh-mm-ss') + ' ' + query.value(1).toString().replace ('?', '_')+'__'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'.jpg')
+                file_parth = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString()+'/'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'/'+query.value(0).toDateTime().toString('dd_MM_yy')+'/'+query.value(0).toDateTime().toString('dd_MM_yy hh-mm-ss') + ' ' + query.value(1).toString().replace ('?', '_')+'__'+re.match('[a-zA-Z0-9 ]+(.*)', unicode(query.value(4).toString())).group(1)+'_'+query.value(5).toString()+'.jpg')
                 file_parth = file_parth.replace('\\','/')
                 if os.path.exists(unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())) is False:
                     firstiter = unicode(globalConf.get('options', 'folderpath')+query.value(3).toString())
